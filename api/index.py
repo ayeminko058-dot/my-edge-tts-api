@@ -6,16 +6,32 @@ import io
 app = FastAPI()
 
 @app.get("/api/tts")
-async def text_to_speech(text: str = Query(..., description="စာသား ထည့်ရန်"), voice: str = Query("my-MM-NilarNeural", description="အသံရွေးရန်")):
+async def text_to_speech(
+    text: str = Query(..., description="စာသား ထည့်ရန်"),
+    voice: str = Query("my-MM-NilarNeural", description="အသံရွေးရန်"),
+    rate: str = Query("+0%"),
+    pitch: str = Query("+0Hz")
+):
     try:
-        communicate = edge_tts.Communicate(text, voice)
+        communicate = edge_tts.Communicate(
+            text=text,
+            voice=voice,
+            rate=rate,
+            pitch=pitch
+        )
+
         audio_stream = io.BytesIO()
-        
+
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_stream.write(chunk["data"])
-                
+
         audio_stream.seek(0)
-        return StreamingResponse(audio_stream, media_type="audio/mpeg")
+
+        return StreamingResponse(
+            audio_stream,
+            media_type="audio/mpeg"
+        )
+
     except Exception as e:
         return {"error": str(e)}
